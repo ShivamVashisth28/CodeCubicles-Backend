@@ -1,58 +1,55 @@
 import { Router } from "express";
-import { getResponseFromGoogle } from "../utils/getResponseFromAi.js";
-import * as PlayHT from "playht"; // Import PlayHT SDK
 import axios from "axios";
+import { getResponseFromGoogle } from "../utils/getResponseFromAi.js";
+
 
 const router = Router();
 
-PlayHT.init({
-  apiKey: process.env.PLAYHT_SECRET_KEY,
-  userId: process.env.PLAYHT_USERID,
-});
-
-
-
 const setTextFromTopic = async (topic) => {
-  const prompt = `Explain this ${topic} in easy language like you would explain this to a layman with some example and give the response in simple engish paragraphs.`;
+  const prompt = `Explain this ${topic} in easy language like you would explain this to a layman with some example and give the response in simple english paragraphs.`;
   const response = await axios.post('http://localhost:5000/api/v1/ai/chat', { prompt });
-  const data = await response.data
-  return data.data
-  
-}
+  const data = response.data;
+  return data.data;
+};
 
 router.post("/audio", async (req, res) => {
   try {
-    const topic = req.body.text
-
-
+    const topic = req.body.text;
     const text = await setTextFromTopic(topic);
-    const streamingOptions = {
-      voiceEngine: "PlayHT1.0",
-      voiceId: "s3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json",
-      sampleRate: 44100,
-      outputFormat: "mp3",
-      speed: 1,
+
+    // Call Murf.ai API to generate speech
+    const murfPayload = {
+      text: text,
+      voiceId: "en-US-natalie"
     };
 
-    // Generate the audio asynchronously and get the audio URL
-    const response = await PlayHT.generate(text, streamingOptions);
-    const audioUrl = response.audioUrl;
+    const murfConfig = {
+      method: 'post',
+      url: 'https://api.murf.ai/v1/speech/generate',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'api-key': 'ap2_aef50a38-d7e6-4d49-9710-ba4ebe7ee165' // Replace with your actual Murf API key
+      },
+      data: JSON.stringify(murfPayload)
+    };
 
-    // Fetch the generated audio from the PlayHT API using axios
+    const murfResponse = await axios(murfConfig);
+    console.log(murfResponse)
+    const audioUrl = murfResponse.data.audioFile; // Make sure Murf returns this
+
+    // Fetch the generated audio
     const audioStream = await axios({
-      method: "get",
+      method: 'get',
       url: audioUrl,
-      responseType: "stream", // Stream the response data
+      responseType: 'stream'
     });
 
-    // Set headers to indicate an audio file is being sent
     res.setHeader("Content-Type", "audio/mpeg");
-
-    // Stream the audio data from PlayHT API directly to the client
     audioStream.data.pipe(res);
 
     audioStream.data.on("end", () => {
-      res.end(); // End the response once the streaming is done
+      res.end();
     });
 
   } catch (error) {
@@ -60,6 +57,9 @@ router.post("/audio", async (req, res) => {
     res.status(500).send("Error in generating or sending audio");
   }
 });
+
+export default router;
+
 
 router.post("/chat", async (req, res) => {
   const body = req.body;
