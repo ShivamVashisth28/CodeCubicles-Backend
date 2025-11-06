@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json({ limit:"16kb"}))
 app.use(cors({
-    origing : "https://code-cubicles-edu-point.vercel.app"
+    origin : "https://code-cubicles-edu-point.vercel.app"
     // origin: process.env.CORS_ORIGIN || "http://localhost:5173/" 
 }))
 
