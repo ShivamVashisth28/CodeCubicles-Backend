@@ -10,11 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // ✅ Set up CORS first
 app.use(
-  cors({
-    origin: ["https://code-cubicles-edu-point.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
+  cors()
 );
 
 app.use(express.json({ limit: "16kb" }));
