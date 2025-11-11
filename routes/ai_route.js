@@ -7,9 +7,9 @@ const router = Router();
 
 const setTextFromTopic = async (topic) => {
   const prompt = `Explain this ${topic} in easy language like you would explain this to a layman with some example and give the response in simple english paragraphs.`;
-  const response = await axios.post('https://codecubicles-backend.onrender.com/api/v1/ai/chat', { prompt });
-  const data = response.data;
-  return data.data;
+  // ✅ Call the function directly — no axios request
+  const response = await getResponseFromGoogle(prompt);
+  return response;
 };
 
 router.post("/audio", async (req, res) => {
