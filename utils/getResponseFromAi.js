@@ -1,22 +1,34 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config({ path: "./.env" });
 
-// Initialize the client with your API key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+// Initialize Gemini client
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 
-// ✅ Use the correct model identifier and latest API
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-// You can also try "gemini-1.5-pro" for higher quality output
+// ✅ Use the new model name (Gemini 2.x)
+const MODEL_NAME = "gemini-2.0-flash"; 
+// or try "gemini-2.0-pro" if your key supports it
 
 export const getResponseFromGoogle = async (prompt) => {
   try {
-    const result = await model.generateContent(prompt);
-    const data = result.response.text();
-    return data;
+    // The new API uses ai.models.generateContent()
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
+
+    // Extract the text safely
+    const text = response?.response?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+    return text;
+
   } catch (error) {
     console.error("Error fetching from Gemini API:", error);
-    return null;
+    return "⚠️ Gemini API call failed. Please try again later.";
   }
 };
